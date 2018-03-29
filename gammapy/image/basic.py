@@ -199,7 +199,7 @@ class IACTBasicImageEstimator(BasicImageEstimator):
         exposure.data = np.nan_to_num(exposure.data.value)
         return exposure
 
-    def psf(self, observations, containment_fraction=0.99, rad_max=None):
+    def psf(self, observations, containment_fraction=0.99, rad_max=None, isalist=True):
         """Mean point spread function kernel image.
 
         Parameters
@@ -221,8 +221,11 @@ class IACTBasicImageEstimator(BasicImageEstimator):
 
         refskyim = self.reference
         refskypos = refskyim.center
-        mean_psf = observations.make_mean_psf(refskypos)
 
+        if isalist:
+            mean_psf = observations.make_mean_psf(refskypos)
+        else:
+            mean_psf = observations.make_psf(refskypos)
         erange = u.Quantity((p['emin'], p['emax']))
         psf_mean = mean_psf.table_psf_in_energy_band(erange, spectrum=self.spectral_model)
 
@@ -390,6 +393,77 @@ class IACTBasicImageEstimator(BasicImageEstimator):
         if 'psf' in which:
             result['psf'] = self.psf(observations)
         return result
+
+    def run_indiv(self, observations, which='all'):
+        """
+        saves details for each observation
+
+        Run IACT basic image estimation, one by one for a list of observations.
+
+        Parameters
+        ----------
+        observations : `~gammapy.data.ObservationList`
+            List of observations
+
+        Returns
+        -------
+        list of sky_images : `~gammapy.image.SkyImageList`
+
+        """
+        from astropy.utils.console import ProgressBar
+
+        image_list=[]
+
+
+        for observation in ProgressBar(observations):
+            result = SkyImageList()
+
+            if 'all' in which:
+                which = ['counts', 'exposure', 'background', 'excess', 'flux', 'psf']
+
+            for name in which:
+                result[name] = self._get_empty_skyimage(name)
+
+
+            if 'exposure' in which:
+                exposure = self._exposure(observation)
+                result['exposure'] = exposure
+                # TODO: improve SkyImage.paste() so that it enforces compatibility
+                # of units when doing the sum. The fix below can then be removed.
+                result['exposure'].unit = exposure.unit
+
+            if 'counts' in which:
+                counts = self._counts(observation)
+                # TODO: on the left side of the field of view there is one extra
+                # row of pixels in the counts image compared to the exposure and
+                # background image. Check why this happends and remove the fix below
+                not_has_exposure = ~(exposure.data > 0)
+                counts.data[not_has_exposure] = 0
+                result['counts']= counts
+
+            if 'background' in which:
+                backres=self._background(counts, exposure, observation)
+                background=backres['background']
+                result['background'] = background
+                result['background'].meta['NORM'] = backres['background'].meta['NORM']
+                #print(backres['background'].meta['NORM'])
+
+
+            if 'excess' in which:
+                result['excess'] = self.excess(SkyImageList([counts, background]))
+
+
+            if 'flux' in which:
+                flux = self.flux(SkyImageList([counts, background, exposure]))
+                result['flux']=flux
+                # TODO: improve SkyImage.paste() so that it enforces compatibility
+                # of units when doing the sum. The fix below can then be removed.
+                result['flux'].unit = flux.unit
+
+            if 'psf' in which:
+                result['psf'] = self.psf(observation,isalist=False)
+            image_list.append(result)
+        return image_list
 
 
 class FermiLATBasicImageEstimator(BasicImageEstimator):

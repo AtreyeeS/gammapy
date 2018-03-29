@@ -452,6 +452,7 @@ class FoVBackgroundEstimator(object):
             acceptance_excluded = np.sum(exposure_on.data * exclusion.data)
             #print(counts_excluded, acceptance_excluded, counts_excluded / acceptance_excluded)
             norm = counts_excluded / acceptance_excluded
+        #    print("\n Inside FoV estimator, norm, counts, model",norm,counts_excluded, acceptance_excluded)
         else:
             norm=1
         result = SkyImageList()
