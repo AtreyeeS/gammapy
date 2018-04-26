@@ -419,7 +419,7 @@ class IACTBasicImageEstimator(BasicImageEstimator):
             result = SkyImageList()
 
             if 'all' in which:
-                which = ['counts', 'exposure', 'background', 'excess', 'flux', 'psf']
+                which = ['counts', 'exposure', 'background', 'excess', 'flux']
 
             for name in which:
                 result[name] = self._get_empty_skyimage(name)
@@ -460,10 +460,59 @@ class IACTBasicImageEstimator(BasicImageEstimator):
                 # of units when doing the sum. The fix below can then be removed.
                 result['flux'].unit = flux.unit
 
-            if 'psf' in which:
-                result['psf'] = self.psf(observation,isalist=False)
+
             image_list.append(result)
         return image_list
+
+    def return_composite_image(self, images, bk):
+        """
+
+        :param images: the list of sky images
+        :param bk: The background scaling
+        :return: The composite added image; result
+        """
+        which = ['counts', 'exposure', 'background', 'excess']
+        result = SkyImageList()
+        i=0
+        for name in which:
+            result[name] = self._get_empty_skyimage(name)
+
+        for animage in images:
+
+            if 'exposure' in which:
+                exposure = animage['exposure']
+                result['exposure'].paste(exposure)
+                # TODO: improve SkyImage.paste() so that it enforces compatibility
+                # of units when doing the sum. The fix below can then be removed.
+                result['exposure'].unit = exposure.unit
+
+            if 'counts' in which:
+                counts = animage['counts']
+                # TODO: on the left side of the field of view there is one extra
+                # row of pixels in the counts image compared to the exposure and
+                # background image. Check why this happends and remove the fix below
+                not_has_exposure = ~(exposure.data > 0)
+                counts.data[not_has_exposure] = 0
+                result['counts'].paste(counts)
+
+            if 'background' in which:
+                background = animage['background']
+                background.data = background.data*bk[i]
+                # TODO: include stacked alpha and on/off exposure images
+                result['background'].paste(background)
+
+            if 'excess' in which:
+                excess = self.excess(SkyImageList([counts, background]))
+                result['excess'].paste(excess)
+
+            i=i+1
+
+        return result
+
+
+
+
+
 
 
 class FermiLATBasicImageEstimator(BasicImageEstimator):
