@@ -36,11 +36,13 @@ def geom(map_type, ebounds):
             "geom": geom(map_type="wcs", ebounds=[0.1, 1, 10]),
             "shape": (2, 3, 4),
             "sum": 4760.562826,
+            "nbin": 1
         },
         {
             "geom": geom(map_type="wcs", ebounds=[0.1, 10]),
             "shape": (1, 3, 4),
-            "sum": 49620.735907,
+            "sum": 4760.562826,
+            "nbin": 2
         },
         # TODO: make this work for HPX
         # 'HpxGeom' object has no attribute 'separation'
@@ -57,6 +59,7 @@ def test_make_map_background_irf(bkg_3d, pars):
         livetime="42 s",
         bkg=bkg_3d,
         geom=pars["geom"],
+        n_integration_bins=pars["nbin"]
     )
 
     assert m.data.shape == pars["shape"]
