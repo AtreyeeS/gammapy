@@ -66,8 +66,6 @@ def make_axes_cols(axes, axis_names=None):
 
         if name == "ENERGY":
             colnames = ["ENERGY", "E_MIN", "E_MAX"]
-        elif name == "TIME":
-            colnames = ["TIME", "T_MIN", "T_MAX"]
         else:
             s = "AXIS%i" % i if name == "" else name
             colnames = [s, s + "_MIN", s + "_MAX"]
@@ -107,11 +105,12 @@ def find_and_read_bands(hdu, header=None):
     else:
         for i in range(5):
             if "AXCOLS%i" % i in hdu.header:
+                print("AXCOLS%i" % i)
                 axis_cols += [hdu.header["AXCOLS%i" % i].split(",")]
+                print(axis_cols)
 
     interp = "lin"
     for i, cols in enumerate(axis_cols):
-
         if "ENERGY" in cols or "E_MIN" in cols:
             name = "energy"
             interp = "log"
