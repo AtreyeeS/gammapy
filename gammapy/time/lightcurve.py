@@ -10,7 +10,7 @@ from ..utils.scripts import make_path
 from ..utils.table import table_from_row_data
 from ..stats.poisson import significance_on_off
 
-__all__ = ["LightCurve", "LightCurveEstimator"]
+__all__ = ["LightCurve", "LightCurveEstimator", "LightCurve3D"]
 
 
 class LightCurve:
@@ -887,3 +887,42 @@ class LightCurveEstimator:
                 ]
             ),
         )
+
+class LightCurve3D:
+    """Map based light curve estimator.
+
+        For a usage example see :gp-notebook:`light_curve`.
+
+        Parameters
+        ----------
+        observations : `~gammapy.data.Observations`
+           Observations to process
+        """
+
+    def __init__(self, observations):
+        self.observations = observations
+
+    def make_uniform_time_bins(self, tstart, tstop, tstep):
+        """Create time intervals of fixed size.
+
+                Parameters
+                ----------
+                tstep :
+
+
+                Returns
+                -------
+
+
+                Examples
+                --------
+                To extract intervals for light curve::
+
+                    intervals = list(zip(table['t_start'], table['t_stop']))
+                """
+
+    def make_maps(self, time_list):
+
+    def quick_look(self):
+
+    def compute_flux(self):
