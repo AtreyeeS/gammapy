@@ -888,41 +888,46 @@ class LightCurveEstimator:
             ),
         )
 
-class LightCurve3D:
-    """Map based light curve estimator.
 
-        For a usage example see :gp-notebook:`light_curve`.
+class LightCurveEstimator3D:
+    """Flux points estimator.
 
-        Parameters
+        Estimates integrated flux for a given list of datasets.
+
+       Parameters
         ----------
-        observations : `~gammapy.data.Observations`
-           Observations to process
-        """
+        datasets : list of `~gammapy.spectrum.SpectrumDatatset`
+            Spectrum datasets.
 
-    def __init__(self, observations):
-        self.observations = observations
+    """
 
-    def make_uniform_time_bins(self, tstart, tstop, tstep):
-        """Create time intervals of fixed size.
-
-                Parameters
-                ----------
-                tstep :
+    def __init__(self, datasets):
+        # make a copy to not modify the input datasets
+        if not isinstance(datasets, Datasets):
+            datasets = Datasets(datasets)
+        self.datasets = datasets.copy()
 
 
-                Returns
-                -------
+    def _freeze_parameters(self):
+        # freeze all parameters except the norms
+        for par in self.datasets.parameters:
+            if par is not self.model.norm:
+                par.frozen = True
+
+    def get_times(self):
+        #TODO: group times here?
+
+        for dataset in datasets:
+            dataset.counts["meta"]
 
 
-                Examples
-                --------
-                To extract intervals for light curve::
 
-                    intervals = list(zip(table['t_start'], table['t_stop']))
-                """
+    def quick_look(self):
+        for dataset in datasets:
+            dataset.counts - datasets.
 
     def make_maps(self, time_list):
 
-    def quick_look(self):
+
 
     def compute_flux(self):
