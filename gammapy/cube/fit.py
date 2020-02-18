@@ -1510,7 +1510,7 @@ class MapEvaluator:
         PSF kernel
     edisp : `~gammapy.irf.EDispKernel`
         Energy dispersion
-    times : `~astropy.time.Time`
+    times : `~gammapy.data.GTI`
         Time of computation of temporal model
     evaluation_mode : {"local", "global"}
         Model evaluation mode.

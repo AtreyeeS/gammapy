@@ -2,6 +2,7 @@
 """Time-dependent models."""
 import numpy as np
 import scipy.interpolate
+import scipy.integrate as integrate
 from astropy import units as u
 from astropy.table import Table
 from astropy.time import Time
@@ -17,12 +18,16 @@ from .core import Model
 class TemporalModel(Model):
     """Temporal model base class."""
 
-    def __call__(self, time):
+    def __call__(self, gti):
         """Call evaluate method"""
         # Works for Time object list, but not a list of Time objects
         kwargs = {par.name: par.quantity for par in self.parameters}
-        return self.evaluate(time.mjd, **kwargs)
+        return self.integral(gti.mjd, **kwargs)
 
+    def integral(self, time, **kwargs):
+        eval = self.evaluate(time, **kwargs)
+        func = scipy.interpolate.interp1d(time, eval)
+        return integrate.quad(func, time[0], time[-1])[0]
 
 # TODO: make this a small ABC to define a uniform interface.
 class TemplateTemporalModel(TemporalModel):

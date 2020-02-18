@@ -1,0 +1,4 @@
+global color=red
+fk5;point(128.88670,-45.65894)# point=cross text={HESS J0835-455}
+fk5;point(133.00000,-46.37000)# point=cross text={HESS J0852-463}
+fk5;point(154.74777,-58.93176)# point=cross text={HESS J1018-589 A}
