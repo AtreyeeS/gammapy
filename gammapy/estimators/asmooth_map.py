@@ -4,14 +4,44 @@ import numpy as np
 from astropy.convolution import Gaussian2DKernel, Tophat2DKernel
 from astropy.coordinates import Angle
 from gammapy.datasets import MapDatasetOnOff
+from gammapy.datasets.map import MapEvaluator
 from gammapy.maps import WcsNDMap
 from gammapy.stats import CashCountsStatistic
 from gammapy.utils.array import scale_cube
-from gammapy.makers.utils import _map_spectrum_weight
-from gammapy.modeling.models import PowerLawSpectralModel
+from gammapy.modeling.models import (
+    PowerLawSpectralModel,
+    ConstantSpatialModel,
+    SkyModel,
+)
 from .core import Estimator
 
 __all__ = ["ASmoothMapEstimator"]
+
+
+def compute_reco_exposure(dataset, spectral_model=None):
+    """
+    Create and exposure map in reco energies
+    Parameters
+    ----------
+    dataset:`~gammapy.cube.MapDataset` or `~gammapy.cube.MapDatasetOnOff`
+            the input dataset
+    spectral_model: `~gammapy.modeling.models.SpectralModel`
+            assumed spectral shape. If none, a Power Law of index 2 is assumed
+    """
+    if spectral_model is None:
+        spectral_model = PowerLawSpectralModel()
+    model = SkyModel(
+        spatial_model=ConstantSpatialModel(), spectral_model=spectral_model
+    )
+    kernel = None
+    if dataset.edisp is not None:
+        kernel = dataset.edisp.get_edisp_kernel(position=dataset._geom.center_skydir)
+    meval = MapEvaluator(model=model, exposure=dataset.exposure, edisp=kernel)
+    npred = meval.compute_npred()
+    e_reco = dataset._geom.get_axis_by_name("energy").edges
+    ref_flux = spectral_model.integral(e_reco[:-1], e_reco[1:])
+    reco_exposure = npred / ref_flux[:, np.newaxis, np.newaxis]
+    return reco_exposure
 
 
 def _significance_asmooth(counts, background):
@@ -45,7 +75,14 @@ class ASmoothMapEstimator(Estimator):
 
     tag = "ASmoothMapEstimator"
 
-    def __init__(self, scales=None, kernel=Gaussian2DKernel, spectrum=None, method="lima", threshold=5):
+    def __init__(
+        self,
+        scales=None,
+        kernel=Gaussian2DKernel,
+        spectrum=None,
+        method="lima",
+        threshold=5,
+    ):
         if spectrum is None:
             spectrum = PowerLawSpectralModel()
 
@@ -136,7 +173,7 @@ class ASmoothMapEstimator(Estimator):
         background = background.sum_over_axes(keepdims=False)
 
         if dataset.exposure is not None:
-            exposure = _map_spectrum_weight(dataset.exposure, self.spectrum)
+            exposure = compute_reco_exposure(dataset, self.spectrum)
             exposure = exposure.sum_over_axes(keepdims=False)
         else:
             exposure = None

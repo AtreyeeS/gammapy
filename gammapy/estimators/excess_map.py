@@ -8,6 +8,7 @@ from gammapy.datasets import MapDataset, MapDatasetOnOff
 from gammapy.maps import Map
 from gammapy.stats import CashCountsStatistic, WStatCountsStatistic
 from .core import Estimator
+from .asmooth_map import compute_reco_exposure
 
 __all__ = [
     "ExcessMapEstimator",
@@ -80,6 +81,7 @@ class ExcessMapEstimator(Estimator):
 
             * "errn-errp": estimate asymmetric errors.
             * "ul": estimate upper limits.
+            * "flux": compute flux map
 
         By default all additional quantities are estimated.
     apply_mask_fit : Bool
@@ -90,7 +92,7 @@ class ExcessMapEstimator(Estimator):
     """
 
     tag = "ExcessMapEstimator"
-    _available_selection_optional = ["errn-errp", "ul"]
+    _available_selection_optional = ["errn-errp", "ul", "flux"]
 
     def __init__(
         self,
@@ -139,6 +141,7 @@ class ExcessMapEstimator(Estimator):
                 * errn : negative error map
                 * errp : positive error map
                 * ul : upper limit map
+                * flux : flux map
 
         """
         if not isinstance(dataset, MapDataset):
@@ -180,4 +183,11 @@ class ExcessMapEstimator(Estimator):
                 geom, data=counts_stat.compute_upper_limit(self.n_sigma_ul)
             )
             result.update({"ul": ul})
+
+        if "flux" in self.selection_optional:
+            reco_exposure = compute_reco_exposure(dataset)
+            if self.return_image:
+                reco_exposure = reco_exposure.sum_over_axes(keepdims=True)
+            flux = excess / reco_exposure
+            result.update({"flux": flux})
         return result

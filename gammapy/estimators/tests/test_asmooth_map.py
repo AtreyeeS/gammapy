@@ -28,6 +28,11 @@ def input_dataset():
     )
     dataset = datasets[0]
     dataset.psf = None
+    etrue = dataset._geom.get_axis_by_name("energy").copy(name="energy_true")
+    geom_etrue = dataset._geom.to_image().to_cube([etrue])
+    dataset.exposure = Map.from_geom(
+        geom=geom_etrue, data=dataset.exposure.data, unit=dataset.exposure.unit
+    )
     return dataset
 
 
@@ -77,11 +82,10 @@ def test_asmooth_dataset(input_dataset):
 
     desired = {
         "counts": 369.479167,
-        "background": 0.184005,
+        "background": 0.13461,
         "scale": 0.056419,
-        "significance": 72.971513,
+        "significance": 74.677406,
         "flux": 1.237119e-09,
-
     }
 
     for name in smoothed:
