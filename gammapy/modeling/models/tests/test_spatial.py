@@ -223,6 +223,14 @@ def test_sky_disk_edge():
     assert_allclose((value_edge_nwidth / value_center).to_value(""), 0.95)
 
 
+def test_from_position():
+    pos = SkyCoord(20, 17, unit="deg", frame="galactic")
+    model = GaussianSpatialModel.from_position(position=pos, sigma=0.8 * u.deg)
+    assert model.frame.name == "galactic"
+    assert_allclose(model.parameters["lon_0"].value, 20.0, rtol=1e-2)
+    assert_allclose(model.parameters["sigma"].value, 0.8, rtol=1e-2)
+
+
 def test_disk_from_region():
     region = EllipseSkyRegion(
         center=SkyCoord(20, 17, unit="deg"),
@@ -255,7 +263,7 @@ def test_disk_from_region():
     disk = DiskSpatialModel.from_region(region)
     assert_allclose(disk.parameters["e"].value, 0.0, rtol=1e-2)
     assert_allclose(disk.parameters["lon_0"].value, 20, rtol=1e-2)
-    assert disk.frame == "galactic"
+    assert disk.frame.name == "galactic"
 
     region = PointSkyRegion(center=region.center)
     with pytest.raises(ValueError):
