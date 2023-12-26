@@ -2553,7 +2553,7 @@ class TimeMapAxis:
             coord = self.reference_time + coord
 
         time = Time(coord[..., np.newaxis])
-        delta_plus = (time - self.time_min).value > 0.0
+        delta_plus = (time - self.time_min).value >= 0.0
         delta_minus = (time - self.time_max).value <= 0.0
         mask = np.logical_and(delta_plus, delta_minus)
 

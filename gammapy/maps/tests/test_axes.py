@@ -522,6 +522,10 @@ def test_coord_to_idx_time_axis(time_intervals):
     times[::2] += 1 * u.h
     times = times.insert(0, tref - [1, 2] * u.yr)
 
+    # check edges
+    assert_allclose(axis.coord_to_idx(axis.time_min), np.linspace(0, 19, 20))
+    assert_allclose(axis.coord_to_idx(axis.time_max), np.linspace(0, 19, 20))
+
     idx = axis.coord_to_idx(time)
     indices = axis.coord_to_idx(times)
 
