@@ -1879,6 +1879,7 @@ def test_map_dataset_on_off_to_image():
 def test_map_dataset_geom(geom, sky_model):
     e_true = MapAxis.from_energy_bounds("1 TeV", "10 TeV", nbin=5, name="energy_true")
     dataset = MapDataset.create(geom, energy_axis_true=e_true)
+    expected = dataset._geom
     dataset.counts = None
     dataset.background = None
 
@@ -1888,6 +1889,9 @@ def test_map_dataset_geom(geom, sky_model):
     dataset.mask_safe = None
     dataset.mask_fit = None
 
+    assert dataset._geom == expected
+
+    dataset.edisp = None
     with pytest.raises(ValueError):
         dataset._geom
 

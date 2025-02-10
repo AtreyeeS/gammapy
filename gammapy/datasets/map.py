@@ -712,10 +712,15 @@ class MapDataset(Dataset):
             return self.mask_safe.geom
         elif self.mask_fit is not None:
             return self.mask_fit.geom
+        elif self.edisp and self.exposure:
+            energy_axis = self.edisp.edisp_map.geom.axes["energy"]
+            return self.exposure.geom.to_image().to_cube(
+                axes=[energy_axis.copy(name="energy")]
+            )
         else:
             raise ValueError(
                 "Either 'counts', 'background', 'mask_fit'"
-                " or 'mask_safe' must be defined."
+                " or 'mask_safe' or 'edisp' and 'exposure' must be defined."
             )
 
     @property
