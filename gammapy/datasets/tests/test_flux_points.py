@@ -176,6 +176,11 @@ def test_flux_point_dataset_with_time_axis(tmp_path):
 
 
 @requires_data()
+def test_geom(dataset):
+    assert dataset._geom == dataset.data.geom
+
+
+@requires_data()
 class TestFluxPointFit:
     def test_fit_pwl_minuit(self, dataset):
         fit = Fit()

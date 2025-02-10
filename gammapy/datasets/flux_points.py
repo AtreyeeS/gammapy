@@ -185,6 +185,10 @@ class FluxPointsDataset(Dataset):
         self._stat_type = stat_type
 
     @property
+    def _geom(self):
+        return self.data.geom
+
+    @property
     def mask_valid(self):
         return self._mask_valid
 
