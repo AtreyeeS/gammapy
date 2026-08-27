@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 from .fov import FoVBackgroundMaker
-from .onoffpair import OnOffBackgroundMaker
+from .onoffpair import OnOffBackgroundMaker, check_run_pair_validity
 from .phase import PhaseBackgroundMaker
 from .reflected import (
     ReflectedRegionsBackgroundMaker,
@@ -20,4 +20,5 @@ __all__ = [
     "RingBackgroundMaker",
     "WobbleRegionsFinder",
     "OnOffBackgroundMaker",
+    "check_run_pair_validity",
 ]
