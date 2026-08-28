@@ -243,7 +243,10 @@ class JointSensitivityEstimator(FluxPointsEstimator):
         Default is None.
     parallel_backend : {"multiprocessing", "ray"}, optional
         Which backend to use for multiprocessing. If None, defaults to `~gammapy.utils.parallel.BACKEND_DEFAULT`.
-
+    sensitivity_type : {"differential", "integral"}, optional
+        - "differential": sensitivity per bin (non-overlapping)
+        - "integral": cumulative sensitivity above increasing E_min thresholds
+        Default is "differential".
 
     """
 
@@ -257,7 +260,9 @@ class JointSensitivityEstimator(FluxPointsEstimator):
         energy_edges=[1, 10] * u.TeV,
         n_jobs=None,
         parallel_backend=None,
+        sensitivity_type="differential",
     ):
+        self.sensitivity_type = sensitivity_type
         super().__init__(
             energy_edges=energy_edges,
             source=source,
@@ -268,6 +273,16 @@ class JointSensitivityEstimator(FluxPointsEstimator):
             parallel_backend=parallel_backend,
             allow_multiple_telescopes=True,
         )
+
+    @property
+    def _energy_edges(self):
+        """energy ranges based on sensitivity type."""
+        if self.sensitivity_type == "differential":
+            return list(zip(self.energy_edges[:-1], self.energy_edges[1:]))
+        elif self.sensitivity_type == "integral":
+            return [(e_min, self.energy_edges[-1]) for e_min in self.energy_edges[:-1]]
+        else:
+            raise ValueError(f"Unknown sensitivity_type: {self.sensitivity_type}")
 
     def _estimate_sensitivity_one_bin(self, datasets, energy_min, energy_max):
         """Estimate sensitivity for a single energy bin."""
@@ -317,6 +332,8 @@ class JointSensitivityEstimator(FluxPointsEstimator):
         table : `~astropy.table.Table`
             Sensitivity table with columns: ``e_ref``, ``e_min``, ``e_max``,
             ``e2dnde``, ``dnde``, ``norm_sensitivity``.
+            For integral mode, rows show cumulative sensitivity above increasing thresholds.
+
         """
         if not isinstance(datasets, (Datasets, DatasetsActor)):
             datasets = Datasets(datasets)
@@ -326,15 +343,17 @@ class JointSensitivityEstimator(FluxPointsEstimator):
 
         rows = parallel.run_multiprocessing(
             self._estimate_sensitivity_one_bin,
-            zip(
-                repeat(datasets),
-                self.energy_edges[:-1],
-                self.energy_edges[1:],
-            ),
+            zip(repeat(datasets), *zip(*self._energy_edges)),
             backend=self.parallel_backend,
             pool_kwargs=dict(processes=self.n_jobs),
             task_name="Energy bins",
         )
 
         rows = [r for r in rows if r is not None]
-        return Table(rows, meta={"n_sigma_sensitivity": self.n_sigma_sensitivity})
+        return Table(
+            rows,
+            meta={
+                "n_sigma_sensitivity": self.n_sigma_sensitivity,
+                "sensitivity_type": self.sensitivity_type,
+            },
+        )

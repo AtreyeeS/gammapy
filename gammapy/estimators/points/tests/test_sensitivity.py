@@ -197,4 +197,15 @@ def test_joint_estimator():
     )
 
     res = est.run(d1)
-    assert_allclose(res["dnde"][7], 1.339e-10, rtol=1e-3)
+    assert_allclose(res["dnde"][7], 6.4675e-14, rtol=1e-3)
+
+    est2 = JointSensitivityEstimator(
+        energy_edges=energy_axis.edges,
+        source="source",
+        n_jobs=4,
+        n_sigma_sensitivity=3,
+        sensitivity_type="integral",
+    )
+
+    res2 = est2.run(d1)
+    assert_allclose(res2["dnde"][7], 1.17289e-14, rtol=1e-3)
